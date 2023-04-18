@@ -114,6 +114,6 @@ const itemsPerPage = 10; // Change this number to your desired items per page
 
 Feel free to share this project with your friends, colleagues, or even your grandma! 🧓 After all, who doesn't like a fancy directory listing? 😏
 
-If you have any questions, comments, or jokes to share, head over to the [GitHub repo](https://github.com/flightlesstux/S3-Directory-Listing) and let us know. We'd love to hear from you! 🤗
+If you have any questions, comments, or jokes to share, head over to the [GitHub repo](https://github.com/flightlesstux/S3-Directory-Listing) and let me know. I'd love to hear from you! 🤗
 
 Happy listing! 📚
