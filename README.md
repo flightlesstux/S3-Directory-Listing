@@ -1,5 +1,5 @@
 
-``# S3-Directory-Listing 📂🎉
+# S3-Directory-Listing 📂🎉
 
 Welcome to the **S3-Directory-Listing** project! Are you tired of the boring, generic S3 bucket listings? 🥱 Well, look no further! 😎 This snazzy little JS script and HTML combo will turn your S3 bucket into a fancy file and folder listing with a nice UI and search functionality. Oh, and did I mention it also has a dark mode? 🌙
 
