@@ -1,0 +1,91 @@
+/* General */
+body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+  
+  /* Headers */
+  h1, h2, h3, h4, h5, h6 {
+    color: #fff;
+  }
+  
+  /* Links */
+  a {
+    color: #6dd5ed;
+  }
+  
+  a:hover {
+    color: #46b5d1;
+  }
+  
+  /* Table */
+  .table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  .table thead th {
+    background-color: #282828;
+    border-bottom: 1px solid #444;
+    color: #fff;
+    padding: 12px;
+    text-align: left;
+  }
+  
+  .table tbody tr {
+    border-bottom: 1px solid #444;
+  }
+  
+  .table tbody tr:nth-child(even) {
+    background-color: #222;
+  }
+  
+  .table tbody tr:hover {
+    background-color: #333;
+  }
+  
+  .table tbody td {
+    padding: 12px;
+    color: #888
+  }
+  
+  /* Breadcrumb */
+  .breadcrumb {
+    background-color: #1a1a1a;
+  }
+  
+  .breadcrumb .breadcrumb-item a {
+    color: #6dd5ed;
+  }
+  
+  .breadcrumb .breadcrumb-item a:hover {
+    color: #46b5d1;
+  }
+  
+  .breadcrumb .breadcrumb-item.active {
+    color: #f0f0f0;
+  }
+  
+  /* Alerts */
+  .alert-danger {
+    background-color: #b71c1c;
+    border-color: #b71c1c;
+    color: #fff;
+  }
+  
+  /* Toggle switch */
+  .custom-control-label::before {
+    border-color: #6c757d;
+  }
+  
+  .custom-control-input:checked~.custom-control-label::before {
+    background-color: #6dd5ed;
+    border-color: #6dd5ed;
+  }
+  
+  /* Copyright */
+  .text-muted {
+    color: #888 !important;
+  }
+  

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3 Directory Listing</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+<link id="dark-mode-style" rel="stylesheet" href="dark-mode.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">S3 Directory Listing</h1>
+        <div class="custom-control custom-switch my-3">
+            <input type="checkbox" class="custom-control-input" id="darkModeSwitch">
+            <label class="custom-control-label" for="darkModeSwitch">Dark Mode</label>
+        </div>          
+        <nav id="breadcrumb" class="breadcrumb">
+        </nav>
+        <input class="form-control mb-3" id="search" type="text" placeholder="Search...">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Last Modified</th>
+                    <th>Size</th>
+                </tr>
+            </thead>
+            <tbody id="object-list">
+            </tbody>
+        </table>
+        <div id="loading" class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <div id="error" class="alert alert-danger d-none" role="alert">
+        </div>
+        <div class="row mt-5">
+            <div class="col">
+                <p class="text-muted text-center">
+                    &copy; 2023 S3 Directory Listing - <a href="https://github.com/flightlesstux/S3-Directory-Listing" target="_blank">https://github.com/flightlesstux/S3-Directory-Listing</a>
+                </p>
+            </div>
+        </div>        
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="s3.js"></script>
+</body>
+</html>
