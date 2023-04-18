@@ -106,6 +106,10 @@ You can customize the number of items shown per page by modifying the `itemsPerP
 const itemsPerPage = 10; // Change this number to your desired items per page
 `
 
+## Demo
+
+[https://s3-directory-listing.s3.amazonaws.com/index.html](https://s3-directory-listing.s3.amazonaws.com/index.html)
+
 ## Final Words 📝
 
 Feel free to share this project with your friends, colleagues, or even your grandma! 🧓 After all, who doesn't like a fancy directory listing? 😏
