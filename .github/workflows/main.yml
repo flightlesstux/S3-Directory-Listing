@@ -11,6 +11,9 @@ jobs:
     container: amazon/aws-cli:latest
 
     steps:
+    - name: Setup Utilities
+      run: yum install -y tar gzip
+
     - name: Checkout Repository
       uses: actions/checkout@v2
 
