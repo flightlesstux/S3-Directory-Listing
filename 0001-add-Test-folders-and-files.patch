@@ -1,0 +1,51 @@
+From 3bacf8b51df964255d9f7b1645e9f76c2dbd12ee Mon Sep 17 00:00:00 2001
+From: Ercan <eposta@ercanermis.com>
+Date: Thu, 7 Sep 2023 09:08:37 +0300
+Subject: [PATCH] add: Test folders and files
+
+---
+ test-1.file                 | 0
+ test-2.file                 | 0
+ test-folder-1/folder-1.file | 0
+ test-folder-1/folder-2.file | 0
+ test-folder-1/folder-3.file | 0
+ test-folder-2/folder-1.file | 0
+ test-folder-2/folder-2.file | 0
+ test-folder-2/folder-3.file | 0
+ 8 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 test-1.file
+ create mode 100644 test-2.file
+ create mode 100644 test-folder-1/folder-1.file
+ create mode 100644 test-folder-1/folder-2.file
+ create mode 100644 test-folder-1/folder-3.file
+ create mode 100644 test-folder-2/folder-1.file
+ create mode 100644 test-folder-2/folder-2.file
+ create mode 100644 test-folder-2/folder-3.file
+
+diff --git a/test-1.file b/test-1.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-2.file b/test-2.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-folder-1/folder-1.file b/test-folder-1/folder-1.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-folder-1/folder-2.file b/test-folder-1/folder-2.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-folder-1/folder-3.file b/test-folder-1/folder-3.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-folder-2/folder-1.file b/test-folder-2/folder-1.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-folder-2/folder-2.file b/test-folder-2/folder-2.file
+new file mode 100644
+index 0000000..e69de29
+diff --git a/test-folder-2/folder-3.file b/test-folder-2/folder-3.file
+new file mode 100644
+index 0000000..e69de29
+-- 
+2.42.0
+
