@@ -7,6 +7,9 @@ const searchInput = document.getElementById('search');
 const loading = document.getElementById('loading');
 const errorAlert = document.getElementById('error');
 const itemsPerPage = 10;
+let currentPage = 1;
+const totalPages = Math.ceil(items.length / itemsPerPage);
+
 
 let currentPath = '';
 
@@ -107,7 +110,15 @@ function listObjects(path) {
       const keys = xmlDoc.getElementsByTagName('Key');
       const prefixes = xmlDoc.getElementsByTagName('Prefix');
 
-      objectList.innerHTML = '';
+      
+  // Pagination logic
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Slice the items based on pagination
+  const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
+  const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
+objectList.innerHTML = '';
 
       Array.from(prefixes).forEach((prefix) => {
         const key = prefix.textContent;
@@ -149,7 +160,10 @@ function listObjects(path) {
 
       updateBreadcrumb(path);
 
-      loading.classList.add('d-none');
+      
+  updatePaginationControls();
+  loading.classList.add('d-none');
+loading.classList.add('d-none');
     })
     .catch((error) => {
       console.error('Error fetching objects:', error);
@@ -206,3 +220,20 @@ breadcrumb.onclick = (e) => {
 };
 
 navigateTo('');
+
+// Pagination controls logic
+document.getElementById('prevPage').addEventListener('click', function() {
+  currentPage = Math.max(currentPage - 1, 1);
+  listObjects(currentPath);
+});
+
+document.getElementById('nextPage').addEventListener('click', function() {
+  currentPage = Math.min(currentPage + 1, totalPages);
+  listObjects(currentPath);
+});
+
+function updatePaginationControls() {
+  document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById('prevPage').disabled = currentPage <= 1;
+  document.getElementById('nextPage').disabled = currentPage >= totalPages;
+}
