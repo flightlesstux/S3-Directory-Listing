@@ -1,4 +1,4 @@
-// S3 bucket name
+let totalPages = 0;// S3 bucket name
 const bucketName = 's3-directory-listing';
 
 const objectList = document.getElementById('object-list');
@@ -8,7 +8,7 @@ const loading = document.getElementById('loading');
 const errorAlert = document.getElementById('error');
 const itemsPerPage = 10;
 let currentPage = 1;
-const totalPages = Math.ceil(items.length / itemsPerPage);
+
 
 
 let currentPath = '';
@@ -118,9 +118,12 @@ function listObjects(path) {
   // Slice the items based on pagination
   const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
   const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
+totalItems = prefixes.length + keys.length;
+totalPages = Math.ceil(totalItems / itemsPerPage);
+
 objectList.innerHTML = '';
 
-      Array.from(prefixes).forEach((prefix) => {
+      displayedPrefixes.forEach((prefix) => {
         const key = prefix.textContent;
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
@@ -138,7 +141,7 @@ objectList.innerHTML = '';
         objectList.appendChild(row);
       });
 
-      Array.from(keys).forEach((keyElement) => {
+      displayedKeys.forEach((keyElement) => {
         const key = keyElement.textContent;
         if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css' || key === path) {
           return;
