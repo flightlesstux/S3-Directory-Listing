@@ -1,5 +1,6 @@
 let totalPages = 0;// S3 bucket name
 const bucketName = 's3-directory-listing';
+const s3Domain = 's3.amazonaws.com';
 
 const objectList = document.getElementById('object-list');
 const breadcrumb = document.getElementById('breadcrumb');
@@ -18,7 +19,7 @@ function isFolder(key) {
 }
 
 function createDownloadLink(key) {
-  const url = `https://${bucketName}.s3.amazonaws.com/${key}`;
+  const url = `https://${bucketName}.${s3Domain}/${key}`;
   const link = document.createElement('a');
   link.href = url;
 
@@ -92,7 +93,7 @@ function formatSize(size) {
 
 function listObjects(path) {
   const prefix = path ? `prefix=${path}&` : '';
-  const url = `https://${bucketName}.s3.amazonaws.com/?list-type=2&${prefix}delimiter=%2F`;
+  const url = `https://${bucketName}.${s3Domain}/?list-type=2&${prefix}delimiter=%2F`;
 
   loading.classList.remove('d-none');
   errorAlert.classList.add('d-none');

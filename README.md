@@ -8,13 +8,14 @@ Welcome to the **S3-Directory-Listing** project! Are you tired of the boring, ge
 To use S3-Directory-Listing, just follow these easy-peasy steps:
 
 1. Clone this repo or copy the contents of ,`dark-mode.css`, `s3.js` and `index.html` to your S3 bucket.
-2. Update the `bucketName` variable in `s3.js` with your bucket's name.
+2. Update the `bucketName` and `s3Domain` variables in `s3.js` with your bucket's name your S3 provider's domain name.
 3. Configure your S3 bucket settings (see section below).
 4. Access the `index.html` file in your browser, and voilà! 🎩✨ You now have a fancy S3 directory listing.
 
-## S3 Bucket Settings 🔧
+## S3 Bucket Settings (AWS) 🔧
 
-To make this magic work, you need to configure your S3 bucket settings properly:
+To make this magic work, you need to configure your S3 bucket settings properly.
+The following steps apply to AWS S3 buckets, they might differ depending on your S3 provider:
 
 1. Make sure your S3 bucket is publicly accessible (or at least accessible to the users you want to share the directory listing with).
 2. Set the bucket policy to allow public read access to your objects. Use the following policy, replacing `<your-bucket-name>` with your actual bucket name:
