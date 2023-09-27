@@ -1,4 +1,4 @@
-let totalPages = 0;// S3 bucket name
+// S3 bucket name
 const bucketName = 's3-directory-listing';
 
 const objectList = document.getElementById('object-list');
@@ -7,10 +7,9 @@ const searchInput = document.getElementById('search');
 const loading = document.getElementById('loading');
 const errorAlert = document.getElementById('error');
 const itemsPerPage = 10;
+
+let totalPages = 0;
 let currentPage = 1;
-
-
-
 let currentPath = '';
 
 function isFolder(key) {
@@ -120,6 +119,16 @@ function listObjects(path) {
   const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
 totalItems = prefixes.length + keys.length;
 totalPages = Math.ceil(totalItems / itemsPerPage);
+  const nextContinuationToken = xmlDoc.querySelector('NextContinuationToken') ? xmlDoc.querySelector('NextContinuationToken').textContent : null;
+  if (nextContinuationToken) {
+    // Enable the "Next" button since there are more items to fetch
+    document.getElementById('nextPage').addEventListener('click', function() {
+      listObjects(currentPath, nextContinuationToken);
+    });
+  } else {
+    document.getElementById('nextPage').disabled = true;
+  }
+
 
 objectList.innerHTML = '';
 
