@@ -139,6 +139,9 @@ objectList.innerHTML = '';
 
       displayedPrefixes.forEach((prefix) => {
         const key = prefix.textContent;
+        if (key === path) {
+          return;
+        }
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
         const link = createDownloadLink(key);
@@ -157,7 +160,7 @@ objectList.innerHTML = '';
 
       displayedKeys.forEach((keyElement) => {
         const key = keyElement.textContent;
-        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css' || key === path) {
+        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css') {
           return;
         }
 
