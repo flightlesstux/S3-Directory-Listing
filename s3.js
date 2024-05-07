@@ -51,12 +51,12 @@ function navigateTo(path) {
 
 function updateBreadcrumb(path) {
   const parts = path.split('/').filter((part) => part);
-  let currentPath = '';
+  let crumbPath = '';
 
   breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="#">Home</a></li>';
 
   parts.forEach((part, index) => {
-    currentPath += part + '/';
+    crumbPath += part + '/';
     const listItem = document.createElement('li');
     listItem.className = 'breadcrumb-item';
 
@@ -67,7 +67,11 @@ function updateBreadcrumb(path) {
       const link = document.createElement('a');
       link.href = '#';
       link.textContent = part;
-      link.onclick = () => navigateTo(currentPath);
+      let thisCrumbPath = crumbPath;
+      link.onclick = (e) => {
+        e.preventDefault();
+        navigateTo(thisCrumbPath);
+      }
       listItem.appendChild(link);
     }
 
