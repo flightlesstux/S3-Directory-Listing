@@ -8,11 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    container: amazon/aws-cli:latest
 
     steps:
-    - name: Install AWS CLI
-      run: |
-        apt-get update && apt-get install -y awscli
     - name: Checkout Repository
       uses: actions/checkout@v4
 
