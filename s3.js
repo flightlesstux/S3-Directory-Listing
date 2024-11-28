@@ -163,6 +163,9 @@ objectList.innerHTML = '';
         if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css') {
           return;
         }
+        if (key === path) {
+          return;
+        }
 
         const lastModified = new Date(keyElement.nextElementSibling.textContent);
         const sizeElement = keyElement.parentNode.querySelector('Size');
