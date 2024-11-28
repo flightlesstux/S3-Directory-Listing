@@ -15,7 +15,7 @@ jobs:
       run: yum install -y tar gzip
 
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Create the folder object type on S3
       run: aws s3api put-object --bucket s3-directory-listing --key folder-test-case/
