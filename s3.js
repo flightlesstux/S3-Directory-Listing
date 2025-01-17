@@ -53,7 +53,7 @@ function updateBreadcrumb(path) {
   const parts = path.split('/').filter((part) => part);
   let crumbPath = '';
 
-  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="#">Home</a></li>';
+  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="/">Home</a></li>';
 
   parts.forEach((part, index) => {
     crumbPath += part + '/';
@@ -65,10 +65,11 @@ function updateBreadcrumb(path) {
       listItem.classList.add('active');
     } else {
       const link = document.createElement('a');
-      link.href = '#';
+      link.href = crumbPath;
       link.textContent = part;
       let thisCrumbPath = crumbPath;
       link.onclick = (e) => {
+        currentPage = 1
         e.preventDefault();
         navigateTo(thisCrumbPath);
       }
@@ -230,13 +231,6 @@ if (localStorage.getItem('darkMode') === 'true') {
   darkModeSwitch.checked = false;
   darkModeStyle.disabled = true;
 }
-
-breadcrumb.onclick = (e) => {
-  e.preventDefault();
-  if (e.target.tagName === 'A') {
-    navigateTo('');
-  }
-};
 
 navigateTo('');
 
