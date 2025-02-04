@@ -1,6 +1,4 @@
-// S3 bucket name
-const bucketName = 's3-directory-listing';
-const s3Domain = 's3.amazonaws.com';
+import { bucketName, s3Domain } from "./config.js"
 
 const objectList = document.getElementById('object-list');
 const breadcrumb = document.getElementById('breadcrumb');
@@ -18,7 +16,7 @@ function isFolder(key) {
 }
 
 function createDownloadLink(key) {
-  urlEncodedKey = encodeURIComponent(key)
+  let urlEncodedKey = encodeURIComponent(key)
   const url = `https://${bucketName}.${s3Domain}/${urlEncodedKey}`;
   const link = document.createElement('a');
   link.href = url;
@@ -123,7 +121,7 @@ function listObjects(path) {
       // Slice the items based on pagination
       const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
       const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
-      totalItems = prefixes.length + keys.length;
+      let totalItems = prefixes.length + keys.length;
       totalPages = Math.ceil(totalItems / itemsPerPage);
       const nextContinuationToken = xmlDoc.querySelector('NextContinuationToken') ? xmlDoc.querySelector('NextContinuationToken').textContent : null;
       if (nextContinuationToken) {
@@ -160,7 +158,7 @@ function listObjects(path) {
 
       displayedKeys.forEach((keyElement) => {
         const key = keyElement.textContent;
-        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css') {
+        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css' || key === 'config.js') {
           return;
         }
         if (key === path) {
