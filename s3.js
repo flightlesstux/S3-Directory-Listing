@@ -1,6 +1,4 @@
-// S3 bucket name
-const bucketName = 's3-directory-listing';
-const s3Domain = 's3.amazonaws.com';
+import { bucketName, s3Domain } from "./config.js"
 
 const objectList = document.getElementById('object-list');
 const breadcrumb = document.getElementById('breadcrumb');
@@ -123,7 +121,7 @@ function listObjects(path) {
       // Slice the items based on pagination
       const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
       const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
-      totalItems = prefixes.length + keys.length;
+      let totalItems = prefixes.length + keys.length;
       totalPages = Math.ceil(totalItems / itemsPerPage);
       const nextContinuationToken = xmlDoc.querySelector('NextContinuationToken') ? xmlDoc.querySelector('NextContinuationToken').textContent : null;
       if (nextContinuationToken) {
