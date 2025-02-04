@@ -16,7 +16,7 @@ function isFolder(key) {
 }
 
 function createDownloadLink(key) {
-  urlEncodedKey = encodeURIComponent(key)
+  let urlEncodedKey = encodeURIComponent(key)
   const url = `https://${bucketName}.${s3Domain}/${urlEncodedKey}`;
   const link = document.createElement('a');
   link.href = url;
