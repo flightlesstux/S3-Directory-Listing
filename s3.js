@@ -18,7 +18,8 @@ function isFolder(key) {
 }
 
 function createDownloadLink(key) {
-  const url = `https://${bucketName}.${s3Domain}/${key}`;
+  urlEncodedKey = encodeURIComponent(key)
+  const url = `https://${bucketName}.${s3Domain}/${urlEncodedKey}`;
   const link = document.createElement('a');
   link.href = url;
 
@@ -53,7 +54,7 @@ function updateBreadcrumb(path) {
   const parts = path.split('/').filter((part) => part);
   let crumbPath = '';
 
-  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="#">Home</a></li>';
+  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="/">Home</a></li>';
 
   parts.forEach((part, index) => {
     crumbPath += part + '/';
@@ -65,10 +66,11 @@ function updateBreadcrumb(path) {
       listItem.classList.add('active');
     } else {
       const link = document.createElement('a');
-      link.href = '#';
+      link.href = crumbPath;
       link.textContent = part;
       let thisCrumbPath = crumbPath;
       link.onclick = (e) => {
+        currentPage = 1
         e.preventDefault();
         navigateTo(thisCrumbPath);
       }
@@ -113,29 +115,27 @@ function listObjects(path) {
       const xmlDoc = parser.parseFromString(text, 'text/xml');
       const keys = xmlDoc.getElementsByTagName('Key');
       const prefixes = xmlDoc.getElementsByTagName('Prefix');
-
       
-  // Pagination logic
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+      // Pagination logic
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+    
+      // Slice the items based on pagination
+      const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
+      const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
+      totalItems = prefixes.length + keys.length;
+      totalPages = Math.ceil(totalItems / itemsPerPage);
+      const nextContinuationToken = xmlDoc.querySelector('NextContinuationToken') ? xmlDoc.querySelector('NextContinuationToken').textContent : null;
+      if (nextContinuationToken) {
+        // Enable the "Next" button since there are more items to fetch
+        document.getElementById('nextPage').addEventListener('click', function() {
+          listObjects(currentPath, nextContinuationToken);
+        });
+      } else {
+        document.getElementById('nextPage').disabled = true;
+      }
 
-  // Slice the items based on pagination
-  const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
-  const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
-totalItems = prefixes.length + keys.length;
-totalPages = Math.ceil(totalItems / itemsPerPage);
-  const nextContinuationToken = xmlDoc.querySelector('NextContinuationToken') ? xmlDoc.querySelector('NextContinuationToken').textContent : null;
-  if (nextContinuationToken) {
-    // Enable the "Next" button since there are more items to fetch
-    document.getElementById('nextPage').addEventListener('click', function() {
-      listObjects(currentPath, nextContinuationToken);
-    });
-  } else {
-    document.getElementById('nextPage').disabled = true;
-  }
-
-
-objectList.innerHTML = '';
+      objectList.innerHTML = '';
 
       displayedPrefixes.forEach((prefix) => {
         const key = prefix.textContent;
@@ -181,12 +181,10 @@ objectList.innerHTML = '';
         objectList.appendChild(row);
       });
 
-      updateBreadcrumb(path);
-
-      
-  updatePaginationControls();
-  loading.classList.add('d-none');
-loading.classList.add('d-none');
+      updateBreadcrumb(path);      
+      updatePaginationControls();
+      loading.classList.add('d-none');
+      loading.classList.add('d-none');
     })
     .catch((error) => {
       console.error('Error fetching objects:', error);
@@ -234,13 +232,6 @@ if (localStorage.getItem('darkMode') === 'true') {
   darkModeSwitch.checked = false;
   darkModeStyle.disabled = true;
 }
-
-breadcrumb.onclick = (e) => {
-  e.preventDefault();
-  if (e.target.tagName === 'A') {
-    navigateTo('');
-  }
-};
 
 navigateTo('');
 
