@@ -54,7 +54,7 @@ function updateBreadcrumb(path) {
   const parts = path.split('/').filter((part) => part);
   let crumbPath = '';
 
-  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="/">Home</a></li>';
+  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="index.html">Home</a></li>';
 
   parts.forEach((part, index) => {
     crumbPath += part + '/';
