@@ -158,7 +158,7 @@ function listObjects(path) {
 
       displayedKeys.forEach((keyElement) => {
         const key = keyElement.textContent;
-        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css') {
+        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css' || key === 'config.js') {
           return;
         }
         if (key === path) {
