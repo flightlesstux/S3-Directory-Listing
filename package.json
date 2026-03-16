@@ -1,0 +1,11 @@
+{
+  "name": "s3-directory-listing",
+  "version": "1.0.0",
+  "description": "A client-side S3 bucket directory listing UI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flightlesstux/S3-Directory-Listing.git"
+  },
+  "homepage": "https://github.com/flightlesstux/S3-Directory-Listing"
+}
