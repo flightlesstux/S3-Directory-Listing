@@ -1,58 +1,101 @@
-import { bucketName, s3Domain } from "./config.js"
+import { bucketName, s3Domain, itemsPerPage, hiddenFiles } from "./config.js";
 
+// DOM references
 const objectList = document.getElementById('object-list');
 const breadcrumb = document.getElementById('breadcrumb');
 const searchInput = document.getElementById('search');
 const loading = document.getElementById('loading');
 const errorAlert = document.getElementById('error');
-const itemsPerPage = 10;
 
-let totalPages = 0;
+// State
+let allItems = [];
 let currentPage = 1;
 let currentPath = '';
+let sortKey = 'name';
+let sortAsc = true;
+
+// File extension → Font Awesome icon class
+const ICON_MAP = {
+  jpg: 'fa-file-image', jpeg: 'fa-file-image', png: 'fa-file-image',
+  gif: 'fa-file-image', svg: 'fa-file-image', webp: 'fa-file-image', ico: 'fa-file-image',
+  pdf: 'fa-file-pdf',
+  doc: 'fa-file-word', docx: 'fa-file-word',
+  xls: 'fa-file-excel', xlsx: 'fa-file-excel',
+  ppt: 'fa-file-powerpoint', pptx: 'fa-file-powerpoint',
+  js: 'fa-file-code', ts: 'fa-file-code', html: 'fa-file-code', htm: 'fa-file-code',
+  css: 'fa-file-code', json: 'fa-file-code', xml: 'fa-file-code',
+  py: 'fa-file-code', rb: 'fa-file-code', go: 'fa-file-code', java: 'fa-file-code',
+  sh: 'fa-file-code', bash: 'fa-file-code', yaml: 'fa-file-code', yml: 'fa-file-code',
+  zip: 'fa-file-archive', tar: 'fa-file-archive', gz: 'fa-file-archive',
+  bz2: 'fa-file-archive', rar: 'fa-file-archive', '7z': 'fa-file-archive',
+  txt: 'fa-file-alt', md: 'fa-file-alt', csv: 'fa-file-alt', log: 'fa-file-alt',
+  mp3: 'fa-file-audio', wav: 'fa-file-audio', flac: 'fa-file-audio', aac: 'fa-file-audio',
+  mp4: 'fa-file-video', avi: 'fa-file-video', mkv: 'fa-file-video', mov: 'fa-file-video',
+};
+
+function getFileIcon(key) {
+  const ext = key.split('.').pop().toLowerCase();
+  return ICON_MAP[ext] || 'fa-file';
+}
+
+// Encode each path segment separately so slashes are preserved in S3 URLs
+function encodeS3Key(key) {
+  return key.split('/').map(encodeURIComponent).join('/');
+}
 
 function isFolder(key) {
   return key.endsWith('/');
 }
 
-function createDownloadLink(key) {
-  let urlEncodedKey = encodeURIComponent(key)
-  const url = `https://${bucketName}.${s3Domain}/${urlEncodedKey}`;
+function createItemLink(key) {
   const link = document.createElement('a');
-  link.href = url;
-
-  // Create the icon element
   const icon = document.createElement('i');
-  icon.className = isFolder(key) ? 'fas fa-folder mr-2' : 'fas fa-file mr-2';
-
-  // Create the span element to hold the text
   const textSpan = document.createElement('span');
 
   if (isFolder(key)) {
+    icon.className = 'fas fa-folder';
     textSpan.textContent = key.slice(0, -1).split('/').pop();
+    link.href = '#';
+    link.onclick = (e) => { e.preventDefault(); navigateTo(key); };
   } else {
+    icon.className = `fas ${getFileIcon(key)}`;
     textSpan.textContent = key.split('/').pop();
+    link.href = `https://${bucketName}.${s3Domain}/${encodeS3Key(key)}`;
     link.setAttribute('download', '');
   }
 
-  // Append the icon and the text span to the link
   link.appendChild(icon);
   link.appendChild(textSpan);
-
   return link;
 }
 
-
-function navigateTo(path) {
+function navigateTo(path, replace = false) {
+  currentPage = 1;
   currentPath = path;
-  listObjects(currentPath);
+  searchInput.value = '';
+  const url = path ? `?prefix=${encodeURIComponent(path)}` : location.pathname;
+  if (replace) {
+    history.replaceState({ path }, '', url);
+  } else {
+    history.pushState({ path }, '', url);
+  }
+  listObjects(path);
 }
 
 function updateBreadcrumb(path) {
-  const parts = path.split('/').filter((part) => part);
+  const parts = path.split('/').filter(Boolean);
   let crumbPath = '';
 
-  breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="index.html">Home</a></li>';
+  breadcrumb.innerHTML = '';
+
+  const homeItem = document.createElement('li');
+  homeItem.className = 'breadcrumb-item';
+  const homeLink = document.createElement('a');
+  homeLink.href = '#';
+  homeLink.textContent = 'Home';
+  homeLink.onclick = (e) => { e.preventDefault(); navigateTo(''); };
+  homeItem.appendChild(homeLink);
+  breadcrumb.appendChild(homeItem);
 
   parts.forEach((part, index) => {
     crumbPath += part + '/';
@@ -64,14 +107,10 @@ function updateBreadcrumb(path) {
       listItem.classList.add('active');
     } else {
       const link = document.createElement('a');
-      link.href = crumbPath;
+      link.href = '#';
       link.textContent = part;
-      let thisCrumbPath = crumbPath;
-      link.onclick = (e) => {
-        currentPage = 1
-        e.preventDefault();
-        navigateTo(thisCrumbPath);
-      }
+      const thisCrumbPath = crumbPath;
+      link.onclick = (e) => { e.preventDefault(); navigateTo(thisCrumbPath); };
       listItem.appendChild(link);
     }
 
@@ -80,172 +119,199 @@ function updateBreadcrumb(path) {
 }
 
 function formatSize(size) {
-  if (isNaN(size)) {
-    return 'Unknown';
-  }
-
+  if (isNaN(size)) return 'Unknown';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let index;
-
-  for (index = 0; size >= 1024 && index < units.length - 1; index++) {
+  let index = 0;
+  while (size >= 1024 && index < units.length - 1) {
     size /= 1024;
+    index++;
   }
-
   return `${size.toFixed(2)} ${units[index]}`;
 }
 
+function sortItems(items) {
+  return [...items].sort((a, b) => {
+    // Folders always sort above files
+    if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
+    let cmp = 0;
+    if (sortKey === 'name') {
+      cmp = a.name.localeCompare(b.name);
+    } else if (sortKey === 'date') {
+      cmp = (a.lastModified?.getTime() ?? 0) - (b.lastModified?.getTime() ?? 0);
+    } else if (sortKey === 'size') {
+      cmp = (isNaN(a.size) ? 0 : a.size) - (isNaN(b.size) ? 0 : b.size);
+    }
+    return sortAsc ? cmp : -cmp;
+  });
+}
+
+function renderItems() {
+  const sorted = sortItems(allItems);
+  const totalPages = Math.max(1, Math.ceil(allItems.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const pageItems = sorted.slice(startIndex, startIndex + itemsPerPage);
+
+  objectList.innerHTML = '';
+
+  if (allItems.length === 0) {
+    const row = objectList.insertRow();
+    const cell = row.insertCell();
+    cell.colSpan = 3;
+    cell.className = 'empty-cell';
+    cell.textContent = 'This folder is empty.';
+  } else {
+    pageItems.forEach((item) => {
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      nameCell.appendChild(createItemLink(item.key));
+      row.appendChild(nameCell);
+      row.insertCell().textContent = item.lastModified ? item.lastModified.toLocaleString() : '';
+      row.insertCell().textContent = item.isFolder ? '' : formatSize(item.size);
+      objectList.appendChild(row);
+    });
+  }
+
+  updatePaginationControls(totalPages);
+  updateSortIndicators();
+}
+
+function parseXML(xmlDoc, path) {
+  const items = [];
+
+  Array.from(xmlDoc.getElementsByTagName('Prefix')).forEach((prefixEl) => {
+    const key = prefixEl.textContent;
+    if (key === path) return;
+    items.push({ key, name: key.slice(0, -1).split('/').pop(), isFolder: true });
+  });
+
+  Array.from(xmlDoc.getElementsByTagName('Key')).forEach((keyEl) => {
+    const key = keyEl.textContent;
+    if (key === path || hiddenFiles.includes(key)) return;
+    const lastModifiedEl = keyEl.parentNode.querySelector('LastModified');
+    const sizeEl = keyEl.parentNode.querySelector('Size');
+    items.push({
+      key,
+      name: key.split('/').pop(),
+      isFolder: false,
+      lastModified: lastModifiedEl ? new Date(lastModifiedEl.textContent) : null,
+      size: sizeEl ? parseInt(sizeEl.textContent, 10) : NaN,
+    });
+  });
+
+  return items;
+}
+
 function listObjects(path) {
-  const prefix = path ? `prefix=${path}&` : '';
-  const url = `https://${bucketName}.${s3Domain}/?list-type=2&${prefix}delimiter=%2F`;
+  const baseUrl = `https://${bucketName}.${s3Domain}/?list-type=2&delimiter=%2F${path ? `&prefix=${encodeURIComponent(path)}` : ''}`;
 
-  loading.classList.remove('d-none');
-  errorAlert.classList.add('d-none');
+  loading.classList.remove('hidden');
+  errorAlert.classList.add('hidden');
+  allItems = [];
 
-  fetch(url)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Error fetching objects: ${response.status}`);
-      }
-      return response.text();
-    })
-    .then((text) => {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(text, 'text/xml');
-      const keys = xmlDoc.getElementsByTagName('Key');
-      const prefixes = xmlDoc.getElementsByTagName('Prefix');
-      
-      // Pagination logic
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-    
-      // Slice the items based on pagination
-      const displayedPrefixes = Array.from(prefixes).slice(startIndex, endIndex);
-      const displayedKeys = Array.from(keys).slice(startIndex, endIndex - displayedPrefixes.length);
-      let totalItems = prefixes.length + keys.length;
-      totalPages = Math.ceil(totalItems / itemsPerPage);
-      const nextContinuationToken = xmlDoc.querySelector('NextContinuationToken') ? xmlDoc.querySelector('NextContinuationToken').textContent : null;
-      if (nextContinuationToken) {
-        // Enable the "Next" button since there are more items to fetch
-        document.getElementById('nextPage').addEventListener('click', function() {
-          listObjects(currentPath, nextContinuationToken);
-        });
-      } else {
-        document.getElementById('nextPage').disabled = true;
-      }
-
-      objectList.innerHTML = '';
-
-      displayedPrefixes.forEach((prefix) => {
-        const key = prefix.textContent;
-        if (key === path) {
-          return;
-        }
-        const row = document.createElement('tr');
-        const nameCell = document.createElement('td');
-        const link = createDownloadLink(key);
-
-        link.onclick = (e) => {
-          e.preventDefault();
-          navigateTo(key);
-        };
-
-        nameCell.appendChild(link);
-        row.appendChild(nameCell);
-        row.insertCell(-1).textContent = ''; // Empty cells for last modified and size
-        row.insertCell(-1).textContent = '';
-        objectList.appendChild(row);
+  function fetchPage(token) {
+    const url = token ? `${baseUrl}&continuation-token=${encodeURIComponent(token)}` : baseUrl;
+    return fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        const xmlDoc = new DOMParser().parseFromString(text, 'text/xml');
+        allItems = allItems.concat(parseXML(xmlDoc, path));
+        const nextToken = xmlDoc.querySelector('NextContinuationToken')?.textContent;
+        return nextToken ? fetchPage(nextToken) : null;
       });
+  }
 
-      displayedKeys.forEach((keyElement) => {
-        const key = keyElement.textContent;
-        if (key === 'index.html' || key === 's3.js' || key === 'dark-mode.css' || key === 'config.js') {
-          return;
-        }
-        if (key === path) {
-          return;
-        }
-
-        const lastModified = new Date(keyElement.nextElementSibling.textContent);
-        const sizeElement = keyElement.parentNode.querySelector('Size');
-        const size = sizeElement ? parseInt(sizeElement.textContent, 10) : NaN;
-        const row = document.createElement('tr');
-        const nameCell = document.createElement('td');
-        const link = createDownloadLink(key);
-
-        nameCell.appendChild(link);
-        row.appendChild(nameCell);
-        row.insertCell(-1).textContent = lastModified.toLocaleString();
-        row.insertCell(-1).textContent = formatSize(size);
-        objectList.appendChild(row);
-      });
-
-      updateBreadcrumb(path);      
-      updatePaginationControls();
-      loading.classList.add('d-none');
-      loading.classList.add('d-none');
+  fetchPage(null)
+    .then(() => {
+      updateBreadcrumb(path);
+      renderItems();
+      loading.classList.add('hidden');
     })
-    .catch((error) => {
-      console.error('Error fetching objects:', error);
-      loading.classList.add('d-none');
-      errorAlert.textContent = `Error fetching objects: ${error.message}`;
-      errorAlert.classList.remove('d-none');
+    .catch((err) => {
+      loading.classList.add('hidden');
+      errorAlert.textContent = `Error fetching objects: ${err.message}`;
+      errorAlert.classList.remove('hidden');
     });
 }
 
+// Search — filters currently rendered rows
 searchInput.addEventListener('input', (e) => {
   const filter = e.target.value.toLowerCase();
-  const rows = objectList.getElementsByTagName('tr');
-
-  for (let i = 0; i < rows.length; i++) {
-    const nameCell = rows[i].getElementsByTagName('td')[0];
-    const name = nameCell.textContent || nameCell.innerText;
-
-    if (name.toLowerCase().indexOf(filter) > -1) {
-      rows[i].style.display = '';
-    } else {
-      rows[i].style.display = 'none';
-    }
+  for (const row of objectList.getElementsByTagName('tr')) {
+    const cell = row.getElementsByTagName('td')[0];
+    if (!cell) continue;
+    row.style.display = cell.textContent.toLowerCase().includes(filter) ? '' : 'none';
   }
 });
 
+// Dark mode — uses data-theme on body, defaults to system preference
 const darkModeSwitch = document.getElementById('darkModeSwitch');
 
-darkModeSwitch.addEventListener('change', (e) => {
-  const darkModeStyle = document.getElementById('dark-mode-style');
-  if (e.target.checked) {
-    darkModeStyle.disabled = false;
-    localStorage.setItem('darkMode', 'true');
-  } else {
-    darkModeStyle.disabled = true;
-    localStorage.setItem('darkMode', 'false');
-  }
-  
-});
-
-const darkModeStyle = document.getElementById('dark-mode-style');
-if (localStorage.getItem('darkMode') === 'true') {
-  darkModeSwitch.checked = true;
-  darkModeStyle.disabled = false;
-} else {
-  darkModeSwitch.checked = false;
-  darkModeStyle.disabled = true;
+function applyTheme(dark) {
+  document.body.dataset.theme = dark ? 'dark' : 'light';
+  darkModeSwitch.checked = dark;
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
 }
 
-navigateTo('');
+darkModeSwitch.addEventListener('change', (e) => applyTheme(e.target.checked));
 
-// Pagination controls logic
-document.getElementById('prevPage').addEventListener('click', function() {
+const storedTheme = localStorage.getItem('theme');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+applyTheme(storedTheme ? storedTheme === 'dark' : prefersDark);
+
+// Pagination — re-renders from allItems, no re-fetch needed
+document.getElementById('prevPage').addEventListener('click', () => {
   currentPage = Math.max(currentPage - 1, 1);
-  listObjects(currentPath);
+  renderItems();
 });
 
-document.getElementById('nextPage').addEventListener('click', function() {
+document.getElementById('nextPage').addEventListener('click', () => {
+  const totalPages = Math.ceil(allItems.length / itemsPerPage);
   currentPage = Math.min(currentPage + 1, totalPages);
-  listObjects(currentPath);
+  renderItems();
 });
 
-function updatePaginationControls() {
+function updatePaginationControls(totalPages) {
   document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
   document.getElementById('prevPage').disabled = currentPage <= 1;
   document.getElementById('nextPage').disabled = currentPage >= totalPages;
 }
+
+// Sort column headers
+function updateSortIndicators() {
+  for (const key of ['name', 'date', 'size']) {
+    const th = document.getElementById(`sort-${key}`);
+    if (!th) continue;
+    th.querySelector('.sort-arrow').textContent = sortKey === key ? (sortAsc ? ' ↑' : ' ↓') : '';
+  }
+}
+
+for (const { id, key } of [
+  { id: 'sort-name', key: 'name' },
+  { id: 'sort-date', key: 'date' },
+  { id: 'sort-size', key: 'size' },
+]) {
+  const th = document.getElementById(id);
+  if (!th) continue;
+  th.style.cursor = 'pointer';
+  th.addEventListener('click', () => {
+    sortKey === key ? (sortAsc = !sortAsc) : (sortKey = key, sortAsc = true);
+    currentPage = 1;
+    renderItems();
+  });
+}
+
+// Browser back/forward support
+window.addEventListener('popstate', (e) => {
+  const path = e.state?.path ?? '';
+  currentPage = 1;
+  currentPath = path;
+  searchInput.value = '';
+  listObjects(path);
+});
+
+// Initialize — read prefix from URL for deep-link support
+const initialPrefix = new URLSearchParams(location.search).get('prefix') ?? '';
+navigateTo(initialPrefix, true);

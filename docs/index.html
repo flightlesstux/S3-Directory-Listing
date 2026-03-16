@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Directory Listing</title>
+  <meta name="description" content="A lightweight, zero-dependency UI that turns any AWS S3 bucket into a clean, navigable file browser.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fa;
+      --bg-card: #ffffff;
+      --text: #1a1a2e;
+      --text-muted: #6c757d;
+      --accent: #0d6efd;
+      --accent-hover: #0b5ed7;
+      --border: #dee2e6;
+      --code-bg: #f1f3f5;
+      --shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --bg-card: #161b22;
+        --text: #e6edf3;
+        --text-muted: #8b949e;
+        --accent: #58a6ff;
+        --accent-hover: #79b8ff;
+        --border: #30363d;
+        --code-bg: #1e2530;
+        --shadow: 0 2px 12px rgba(0,0,0,.4);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    nav .logo { font-weight: 700; font-size: 1rem; color: var(--text); }
+    nav .nav-links { display: flex; gap: 1.5rem; font-size: .9rem; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 1.5rem 4rem;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--code-bg);
+      color: var(--text-muted);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .3rem .75rem;
+      border-radius: 2rem;
+      border: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 540px;
+      margin: 0 auto 2.25rem;
+    }
+    .cta-group { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .65rem 1.4rem;
+      border-radius: .5rem;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; text-decoration: none; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline { border: 1.5px solid var(--border); color: var(--text); background: transparent; }
+
+    /* ── Features ── */
+    .section { padding: 4rem 1.5rem; max-width: 960px; margin: 0 auto; }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: .75rem;
+      padding: 1.4rem 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .card-icon { font-size: 1.4rem; margin-bottom: .6rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+    .card p { font-size: .875rem; color: var(--text-muted); }
+
+    /* ── Quick Start ── */
+    .quickstart { background: var(--bg-card); border: 1px solid var(--border); border-radius: .75rem; overflow: hidden; box-shadow: var(--shadow); }
+    .qs-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .qs-tab {
+      padding: .65rem 1.25rem;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .qs-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .qs-body { padding: 0; }
+    pre {
+      background: var(--code-bg);
+      color: var(--text);
+      padding: 1.5rem;
+      font-size: .82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin: 0;
+      border-radius: 0;
+    }
+    code { font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: .85rem;
+      color: var(--text-muted);
+    }
+    footer a { color: var(--text-muted); }
+    footer a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <span class="logo">S3 Directory Listing</span>
+    <div class="nav-links">
+      <a href="https://github.com/flightlesstux/S3-Directory-Listing">GitHub</a>
+      <a href="https://github.com/flightlesstux/S3-Directory-Listing/releases">Releases</a>
+      <a href="https://github.com/flightlesstux/S3-Directory-Listing/issues">Issues</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="badge">Open Source · MIT License · v2.0.0</div>
+    <h1>Your S3 bucket,<br>beautifully listed.</h1>
+    <p>A zero-dependency client-side UI that turns any AWS S3 bucket into a clean, navigable file browser. Four files. No build step.</p>
+    <div class="cta-group">
+      <a class="btn btn-primary" href="https://github.com/flightlesstux/S3-Directory-Listing/releases/latest">Download v2.0.0</a>
+      <a class="btn btn-outline" href="https://s3-directory-listing.s3.amazonaws.com/index.html" target="_blank">Live Demo</a>
+      <a class="btn btn-outline" href="https://github.com/flightlesstux/S3-Directory-Listing">View on GitHub</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon">📁</div>
+        <h3>Folder Navigation</h3>
+        <p>Browse nested directories with a breadcrumb trail. Browser back and forward buttons work. Deep-link to any subfolder via URL.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <h3>Search & Filter</h3>
+        <p>Instantly filter the current folder's contents as you type. No extra requests — filtering is client-side.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">↕️</div>
+        <h3>Sortable Columns</h3>
+        <p>Click any column header to sort by name, last modified date, or file size. Folders always stay pinned to the top.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌙</div>
+        <h3>Dark Mode</h3>
+        <p>Toggle dark mode with a single switch. Your preference is remembered in localStorage across sessions.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📄</div>
+        <h3>File Type Icons</h3>
+        <p>40+ file extensions mapped to specific icons — images, PDFs, archives, code files, audio, video, and more.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <h3>Easy Configuration</h3>
+        <p>One <code>config.js</code> file controls the bucket name, endpoint, items per page, and which files to hide from the listing.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Quick Start</h2>
+    <div class="quickstart">
+      <div class="qs-tabs">
+        <button class="qs-tab active">1. Upload files</button>
+        <button class="qs-tab">2. config.js</button>
+        <button class="qs-tab">3. Bucket policy</button>
+      </div>
+      <div class="qs-body">
+        <pre><code># Upload all four files to your S3 bucket root:
+
+index.html
+s3.js
+config.js
+dark-mode.css
+
+# Then open your bucket's static website endpoint in a browser.</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      &copy; 2023&ndash;2026 S3 Directory Listing &nbsp;&middot;&nbsp;
+      <a href="https://github.com/flightlesstux/S3-Directory-Listing/blob/main/LICENSE">MIT License</a> &nbsp;&middot;&nbsp;
+      <a href="https://github.com/flightlesstux/S3-Directory-Listing">GitHub</a>
+    </p>
+  </footer>
+
+  <script>
+    const tabs = document.querySelectorAll('.qs-tab');
+    const body = document.querySelector('.qs-body');
+    const content = [
+      `<pre><code># Upload all four files to your S3 bucket root:\n\nindex.html\ns3.js\nconfig.js\ndark-mode.css\n\n# Then open your bucket's static website endpoint in a browser.</code></pre>`,
+      `<pre><code>// config.js — the only file you need to edit\nexport const bucketName  = 'your-bucket-name';\nexport const s3Domain    = 's3.amazonaws.com';\nexport const itemsPerPage = 10;\nexport const hiddenFiles  = ['index.html', 's3.js', 'dark-mode.css', 'config.js'];</code></pre>`,
+      `<pre><code>// S3 bucket policy (replace &lt;your-bucket-name&gt;)\n{\n  "Version": "2012-10-17",\n  "Statement": [{\n    "Effect": "Allow",\n    "Principal": "*",\n    "Action": ["s3:GetObject", "s3:ListBucket"],\n    "Resource": [\n      "arn:aws:s3:::&lt;your-bucket-name&gt;/*",\n      "arn:aws:s3:::&lt;your-bucket-name&gt;"\n    ]\n  }]\n}</code></pre>`
+    ];
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        body.innerHTML = content[i];
+      });
+    });
+  </script>
+
+</body>
+</html>

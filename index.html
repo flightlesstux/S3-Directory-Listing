@@ -1,62 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S3 Directory Listing</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-    </style>
-<link id="dark-mode-style" rel="stylesheet" href="dark-mode.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Directory Listing</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #f6f8fa;
+      --bg-card:     #ffffff;
+      --bg-hover:    #f0f3f6;
+      --text:        #1f2328;
+      --text-muted:  #656d76;
+      --text-link:   #0969da;
+      --border:      #d0d7de;
+      --accent:      #0969da;
+      --danger-bg:   #fff8f0;
+      --danger-text: #bc4c00;
+      --danger-bdr:  #f9d0a0;
+      --shadow:      0 1px 3px rgba(27,31,36,.1), 0 1px 2px rgba(27,31,36,.06);
+      --radius:      6px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body[data-theme="dark"] {
+      --bg:          #0d1117;
+      --bg-card:     #161b22;
+      --bg-hover:    #1c2128;
+      --text:        #e6edf3;
+      --text-muted:  #7d8590;
+      --text-link:   #58a6ff;
+      --border:      #30363d;
+      --accent:      #58a6ff;
+      --danger-bg:   #1a0f00;
+      --danger-text: #f08040;
+      --danger-bdr:  #5a3000;
+      --shadow:      0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+    }
+
+    body {
+      font-family: var(--font);
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      transition: background-color .2s, color .2s;
+      min-height: 100vh;
+    }
+
+    a { color: var(--text-link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: background-color .2s, border-color .2s;
+    }
+
+    .header-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: .75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-weight: 600;
+      font-size: .95rem;
+      color: var(--text);
+      letter-spacing: -.01em;
+    }
+
+    .brand i { color: var(--accent); font-size: 1rem; }
+
+    /* ── Toggle switch ── */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      cursor: pointer;
+      user-select: none;
+      font-size: .82rem;
+      color: var(--text-muted);
+    }
+
+    .theme-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: var(--border);
+      border-radius: 10px;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+
+    .theme-toggle input:checked + .toggle-track { background: var(--accent); }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+
+    .theme-toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
+
+    /* ── Main layout ── */
+    .layout {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 3rem;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      list-style: none;
+      font-size: .82rem;
+      min-height: 1.5rem;
+    }
+
+    .breadcrumb-item {
+      display: flex;
+      align-items: center;
+      color: var(--text-muted);
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+      content: '/';
+      padding: 0 .35rem;
+      color: var(--border);
+    }
+
+    .breadcrumb-item a { color: var(--text-link); }
+    .breadcrumb-item a:hover { text-decoration: underline; }
+    .breadcrumb-item.active { color: var(--text); font-weight: 500; }
+
+    /* ── Search ── */
+    .search-box { position: relative; }
+
+    .search-icon {
+      position: absolute;
+      left: .7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: .8rem;
+      pointer-events: none;
+    }
+
+    #search {
+      width: 100%;
+      padding: .5rem .75rem .5rem 2.1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .875rem;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background-color .2s;
+    }
+
+    #search::placeholder { color: var(--text-muted); }
+
+    #search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+
+    /* ── Table ── */
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-card);
+      box-shadow: var(--shadow);
+      transition: background-color .2s, border-color .2s;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      background: var(--bg);
+      padding: .55rem 1rem;
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color .1s, color .1s;
+    }
+
+    thead th:hover { background: var(--bg-hover); color: var(--text); }
+
+    .sort-arrow { font-size: .7rem; margin-left: .2rem; opacity: .6; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color .1s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg-hover); }
+
+    tbody td {
+      padding: .6rem 1rem;
+      font-size: .875rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Name column: takes remaining width, truncates */
+    tbody td:first-child {
+      color: var(--text);
+      width: 55%;
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* File/folder link */
+    td a {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    td a:hover { color: var(--accent); text-decoration: none; }
+
+    td a i {
+      flex-shrink: 0;
+      width: 14px;
+      text-align: center;
+      font-size: .85rem;
+    }
+
+    td a i.fa-folder       { color: #e8a838; }
+    td a:hover i.fa-folder { color: #c48a1e; }
+
+    td a span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Empty state */
+    .empty-cell {
+      text-align: center !important;
+      color: var(--text-muted) !important;
+      padding: 3rem 1rem !important;
+      font-size: .9rem;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    .error-alert {
+      margin-top: 1rem;
+      padding: .75rem 1rem;
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-bdr);
+      border-radius: var(--radius);
+      font-size: .875rem;
+    }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    .pagination button {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .45rem .9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: background-color .1s, border-color .1s, color .1s;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pagination button:disabled { opacity: .35; cursor: default; }
+
+    #pageInfo { font-size: .82rem; color: var(--text-muted); }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 3rem;
+      padding: 1.5rem 0 .5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: .78rem;
+      color: var(--text-muted);
+    }
+
+    .footer a { color: var(--text-muted); }
+    .footer a:hover { color: var(--accent); text-decoration: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .header-inner { padding: .65rem 1rem; }
+      .layout { padding: 1rem 1rem 2rem; }
+      .brand span { display: none; }
+      tbody td:nth-child(2) { display: none; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="my-4">S3 Directory Listing</h1>
-        <div class="custom-control custom-switch my-3">
-            <input type="checkbox" class="custom-control-input" id="darkModeSwitch">
-            <label class="custom-control-label" for="darkModeSwitch">Dark Mode</label>
-        </div>          
-        <nav id="breadcrumb" class="breadcrumb">
-        </nav>
-        <input class="form-control mb-3" id="search" type="text" placeholder="Search...">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Last Modified</th>
-                    <th>Size</th>
-                </tr>
-            </thead>
-            <tbody id="object-list">
-            </tbody>
-        </table>
-        <div id="loading" class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-        </div>
-        <div id="error" class="alert alert-danger d-none" role="alert">
-        </div>
-        
-<div class="mt-4 d-flex justify-content-between">
-    <button id="prevPage" class="btn btn-primary" disabled>Previous</button>
-    <span id="pageInfo">Page 1</span>
-    <button id="nextPage" class="btn btn-primary">Next</button>
-</div>
-<div class="row mt-5">
-            <div class="col">
-                <p class="text-muted text-center">
-                    &copy; 2023 S3 Directory Listing - <a href="https://github.com/flightlesstux/S3-Directory-Listing" target="_blank">S3-Directory-Listing</a>
-                </p>
-            </div>
-        </div>        
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <i class="fas fa-database"></i>
+        <span>S3 Directory Listing</span>
+      </div>
+      <label class="theme-toggle" title="Toggle dark mode">
+        <input type="checkbox" id="darkModeSwitch">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        <span>Dark mode</span>
+      </label>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script type="module" src="s3.js"></script>
+  </header>
+
+  <div class="layout">
+
+    <div class="toolbar">
+      <nav id="breadcrumb" class="breadcrumb" aria-label="Folder navigation"></nav>
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input id="search" type="text" placeholder="Search files and folders…" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th id="sort-name">Name<span class="sort-arrow">↑</span></th>
+            <th id="sort-date">Last Modified<span class="sort-arrow"></span></th>
+            <th id="sort-size">Size<span class="sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="object-list"></tbody>
+      </table>
+    </div>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="error" class="error-alert hidden"></div>
+
+    <div class="pagination">
+      <button id="prevPage" disabled>
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>
+      <span id="pageInfo">Page 1 of 1</span>
+      <button id="nextPage">
+        Next <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <footer class="footer">
+      &copy; 2023&ndash;2026 S3 Directory Listing &mdash;
+      <a href="https://github.com/flightlesstux/S3-Directory-Listing" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+
+  </div>
+
+  <script type="module" src="s3.js"></script>
 </body>
 </html>

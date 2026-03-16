@@ -1,6 +1,6 @@
 {
   "name": "s3-directory-listing",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A client-side S3 bucket directory listing UI",
   "license": "MIT",
   "repository": {

@@ -1,24 +1,64 @@
+# S3 Directory Listing
 
-# S3-Directory-Listing 📂🎉
+A lightweight, zero-dependency client-side UI that turns any AWS S3 bucket into a clean, navigable file browser. Drop four files into your bucket and you're done.
 
-Welcome to the **S3-Directory-Listing** project! Are you tired of the boring, generic S3 bucket listings? 🥱 Well, look no further! 😎 This snazzy little JS script and HTML combo will turn your S3 bucket into a fancy file and folder listing with a nice UI and search functionality. Oh, and did I mention it also has a dark mode? 🌙
+**[Live Demo](https://s3-directory-listing.s3.amazonaws.com/index.html) · [Releases](https://github.com/flightlesstux/S3-Directory-Listing/releases) · [Landing Page](https://flightlesstux.github.io/S3-Directory-Listing/)**
 
-## Usage 🚀
+---
 
-To use S3-Directory-Listing, just follow these easy-peasy steps:
+## Features
 
-1. Clone this repo or copy the contents of ,`dark-mode.css`, `s3.js` and `index.html` to your S3 bucket.
-2. Update the `bucketName` and `s3Domain` variables in `s3.js` with your bucket's name your S3 provider's domain name.
-3. Configure your S3 bucket settings (see section below).
-4. Access the `index.html` file in your browser, and voilà! 🎩✨ You now have a fancy S3 directory listing.
+- **Folder navigation** with breadcrumb trail and browser back/forward support
+- **Deep linking** — share or bookmark any subfolder via `?prefix=` URL
+- **Search** to filter files and folders on the current page
+- **Sortable columns** — click Name, Last Modified, or Size headers to sort; folders always stay on top
+- **Pagination** — configurable items per page
+- **File type icons** — 40+ extensions mapped to specific icons (image, PDF, archive, code, audio, video, etc.)
+- **Dark mode** — toggle with persistence via `localStorage`
+- **Empty folder state** — friendly message instead of a blank table
+- **S3 continuation token** support — correctly handles folders with more than 1000 objects
 
-## S3 Bucket Settings (AWS) 🔧
+---
 
-To make this magic work, you need to configure your S3 bucket settings properly.
-The following steps apply to AWS S3 buckets, they might differ depending on your S3 provider:
+## Quick Start
 
-1. Make sure your S3 bucket is publicly accessible (or at least accessible to the users you want to share the directory listing with).
-2. Set the bucket policy to allow public read access to your objects. Use the following policy, replacing `<your-bucket-name>` with your actual bucket name:
+### 1. Upload the four files to your S3 bucket
+
+```
+index.html
+s3.js
+config.js
+dark-mode.css
+```
+
+### 2. Edit `config.js`
+
+```js
+export const bucketName = 'your-bucket-name';
+export const s3Domain   = 's3.amazonaws.com';   // or a region endpoint, e.g. s3.eu-west-1.amazonaws.com
+export const itemsPerPage = 10;                  // items shown per page
+export const hiddenFiles  = ['index.html', 's3.js', 'dark-mode.css', 'config.js'];
+```
+
+`hiddenFiles` is the list of filenames the UI will hide from the listing. Add your own app files here if needed.
+
+### 3. Configure your S3 bucket
+
+See the [AWS Setup](#aws-setup) section below.
+
+### 4. Open the bucket's static website URL
+
+```
+https://<your-bucket-name>.s3-website-<region>.amazonaws.com
+```
+
+---
+
+## AWS Setup
+
+### Bucket Policy
+
+Allow public read access. Replace `<your-bucket-name>`:
 
 ```json
 {
@@ -28,10 +68,7 @@ The following steps apply to AWS S3 buckets, they might differ depending on your
             "Sid": "S3DirectoryListing",
             "Effect": "Allow",
             "Principal": "*",
-            "Action": [
-                "s3:GetObject",
-                "s3:ListBucket"
-            ],
+            "Action": ["s3:GetObject", "s3:ListBucket"],
             "Resource": [
                 "arn:aws:s3:::<your-bucket-name>/*",
                 "arn:aws:s3:::<your-bucket-name>"
@@ -39,82 +76,85 @@ The following steps apply to AWS S3 buckets, they might differ depending on your
         }
     ]
 }
-``` 
-Or you can use an IP Policy for your bucket if you need.
+```
+
+To restrict access to specific IP addresses, add a condition:
 
 ```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "S3DirectoryListing",
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": [
-                "s3:GetObject",
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::<your-bucket-name>/*",
-                "arn:aws:s3:::<your-bucket-name>"
-            ],
-            "Condition": {
-                "IpAddress": {
-                    "aws:SourceIp": "<your-ip-address>"
-                }
-            }
-        }
-    ]
+"Condition": {
+    "IpAddress": {
+        "aws:SourceIp": "<your-ip-or-cidr>"
+    }
 }
 ```
 
-Replace `<your-ip-address>` with your desired IP address or a CIDR block to restrict access to specific IP addresses.
+### Static Website Hosting
 
-3.  Enable static website hosting for your bucket:
-    -   Go to your S3 bucket settings on the AWS Management Console.
-    -   Select the "Properties" tab.
-    -   Scroll down to "Static website hosting" and click "Edit".
-    -   Choose "Enable" and set the "Index document" and "Error document" to `index.html`.
-    -   Save your changes.
+1. Open your bucket in the AWS Console → **Properties** tab
+2. Scroll to **Static website hosting** → **Edit**
+3. Set **Enable**, and set both **Index document** and **Error document** to `index.html`
+4. Save
 
-4. Update your Cross-origin resource sharing (CORS) settings like below.
-```
+### CORS Configuration
+
+Required for the browser to call the S3 listing API:
+
+```json
 [
     {
-        "AllowedHeaders": [
-            "*"
-        ],
-        "AllowedMethods": [
-            "GET"
-        ],
-        "AllowedOrigins": [
-            "*"
-        ],
+        "AllowedHeaders": ["*"],
+        "AllowedMethods": ["GET"],
+        "AllowedOrigins": ["*"],
         "ExposeHeaders": []
     }
 ]
 ```
 
-5.  Note down the bucket's static website endpoint (e.g., `http://<your-bucket-name>.s3-website-<your-region>.amazonaws.com/index.html` or `https://<your-bucket-name>.s3.amazonaws.com/index.html` for secure connection). This is where you can access your fancy directory listing.
+---
 
-That's it! Now you can enjoy your brand new, fancy-pants S3 directory listing! 🕺💃
+## Configuration Reference
 
-## A Little Extra ✨
+All options live in `config.js`:
 
-You can customize the number of items shown per page by modifying the `itemsPerPage` variable in `s3.js`.
+| Key | Type | Description |
+|---|---|---|
+| `bucketName` | string | Your S3 bucket name |
+| `s3Domain` | string | S3 endpoint domain (default: `s3.amazonaws.com`) |
+| `itemsPerPage` | number | How many items to show per page (default: `10`) |
+| `hiddenFiles` | string[] | Root-level filenames to hide from the listing |
 
-`
-const itemsPerPage = 10; // Change this number to your desired items per page
-`
+---
 
-## Demo
+## CloudFront
 
-[https://s3-directory-listing.s3.amazonaws.com/index.html](https://s3-directory-listing.s3.amazonaws.com/index.html)
+CloudFront **cannot** be used as a drop-in replacement for `s3Domain`. The app fetches the S3 XML listing API (`list-type=2`) directly — CloudFront proxies object downloads but does not expose that endpoint.
 
-## Final Words 📝
+**Options for keeping the bucket private:**
 
-Feel free to share this project with your friends, colleagues, or even your grandma! 🧓 After all, who doesn't like a fancy directory listing? 😏
+- **ALB + VPC Interface Endpoint for S3** — exposes the bucket only via an Application Load Balancer inside your VPC. The listing API remains accessible without making the bucket public. ([AWS guide](https://aws.amazon.com/blogs/networking-and-content-delivery/hosting-internal-https-static-websites-with-alb-s3-and-privatelink/))
+- **Pre-generated manifest** — run `aws s3api list-objects-v2` at deploy time, save the output as `contents.json`, and modify `s3.js` to read from that file instead. Bucket can be fully private; listing data is just a static JSON file.
 
-If you have any questions, comments, or jokes to share, head over to the [GitHub repo](https://github.com/flightlesstux/S3-Directory-Listing) and let me know. I'd love to hear from you! 🤗
+CloudFront can still sit in front of the HTML/JS files themselves — just keep `s3Domain` pointing at the raw S3 endpoint.
 
-Happy listing! 📚
+---
+
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/). A GitHub Release is created automatically when a `v*` tag is pushed. Each release includes `index.html`, `s3.js`, `config.js`, and `dark-mode.css` as downloadable assets.
+
+| Version | Notes |
+|---|---|
+| v2.0.0 | Fixed pagination, continuation token, URL encoding, URL history, sort, file icons, empty state, removed jQuery |
+| v1.0.0 | Initial versioned release |
+
+---
+
+## Contributing
+
+Pull requests are welcome. For larger changes, open an issue first to discuss what you'd like to change.
+
+---
+
+## License
+
+MIT
