@@ -31,7 +31,7 @@ jobs:
           --exclude ".github/*" \
           --exclude "docs/*" \
           --exclude "README.md" \
-          --exclude "CLAUDE.md" \
+          --exclude "DEV.md" \
           --exclude "package.json"
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
